@@ -2,7 +2,6 @@
 #**********************************注意事项*****************************************
 #脚本必须用root运行
 #检验系统是否满足脚本运行条件(是否为fedora,是否为root用户)
-#写一个脚本，作为每次更换fedora的初始工作，这些选项都设置成可选项来实现,设置前先备份
 #网络设置完成后才能使用yum安装软件
 
 #**********************************工作*********************************************
@@ -13,71 +12,6 @@
 #6.glxinfo | grep direct 如果你看到  direct rendering: Yes  的信息，表明你可以继续安装  Compiz  包
 #看情况安装
 #启用图形化root登录
-
-
-set_echo()
-{
-	NORMAL="$(echo -ne '\033[0;39m')"
-	RED="$(echo -ne '\033[1;31m')"
-	GREEN="$(echo -ne '\033[1;32m')"
-	YELLOW="$(echo -ne '\033[1;33m')"
-	BLUE="$(echo -ne '\033[1;34m')"
-	MAGENTA="$(echo -ne '\033[1;35m')"
-	CYAN="$(echo -ne '\033[1;36m')"
-	WHITE="$(echo -ne '\033[1;37m')"
-	MOVE_TO_COL="$(echo -en '\033[72G')"
-}
-
-relese()
-{
-	DIST=none
-
-# detect mandriva first, fo mandriva provides redhat-release
-	if [ -f /etc/mandriva-release ] ; then
-		DIST=mandriva
-	elif [ -f /etc/fedora-release ] ; then
-		DIST=fedora
-	elif [ -f /etc/redhat-release ] ; then
-		DIST=fedora
-	elif [ -f /etc/centos-release ] ; then
-		DIST=fedora
-	elif [ -f /etc/debian-release ] ; then
-		DIST=debian
-	elif [ -f /etc/SuSE-release ] ; then
-		DIST=suse
-	elif [ `cat /etc/issue | grep Ubuntu | wc -l` != 0 ] ; then
-		DIST=debian
-	elif [ `cat /etc/issue | grep Puppy | wc -l` != 0 ] ; then
-		DIST=legacy
-	fi
-}
-
-check()
-{
-	echo -n "${CYAN}-*- ${GREEN}check script enviroment${NORMAL}" 
-	tang=`id|awk -F "[()]" '{print $2}'`
-	if [ "$tang" != "root" ] ;then
-		echo
-		echo "${RED}The script need ${BLUE}root ${RED}privilege${NORMAL}"
-		exit 1
-	fi
-
-	relese
-	if [ "$DIST" != "fedora" ];then
-		echo
-		echo -e "${RED}脚本仅在中文fedora下使用.${NORMAL}"
-		exit 1
-	fi
-
-	if [ -d $DIR_ROOT ];then
-		:
-	else
-		echo
-		echo -e "${RED}脚本所在目录不存在.${NORMAL}"
-		exit 1
-	fi
-	echo -e "${MOVE_TO_COL}${GREEN}[${CYAN} OK ${GREEN}]${NORMAL}"
-}
 
 message()
 {
@@ -105,6 +39,7 @@ set_font()
 		cd $DIR_ROOT
 		cp -a yahei /usr/share/fonts/
 		cd /usr/share/fonts/yahei
+		unxz *.xz
 		mkfontscale && mkfontdir 2>>${DIR_ROOT}/error_sh
 		fc-cache 2>>${DIR_ROOT}/error_sh
 	fi
@@ -377,12 +312,27 @@ set_ssh_key()
 	echo -n "${CYAN}-*- ${GREEN}设置个ssh个人密钥${NORMAL}"
 	[ ! -d /home/${username}/.ssh ] && mkdir /home/${username}/.ssh
 	cd /home/${username}/.ssh
-	cp /run/media/${username}/IMPORTANT/Study_Materials/server/SSH/我的密钥对/id_rsa .
-	cp /run/media/${username}/IMPORTANT/Study_Materials/server/SSH/我的密钥对/id_rsa /root/.ssh
-#	cat /run/media/${username}/IMPORTANT/Study_Materials/server/SSH/我的密钥对/id_rsa.pub >> authorized_keys 
-	chown ${username}:${username} id_rsa
-	chmod 600 id_rsa
-	chmod 600 /root/.ssh/id_rsa
+	if [ -f ${ROOT_DIR}/common/key/id_rsa ];then
+	    cp ${ROOT_DIR}/common/id_rsa .
+	    cp ${ROOT_DIR}/common/id_rsa /root/.ssh
+	    chown ${username}:${username} id_rsa
+	    chmod 600 id_rsa
+	    chmod 600 /root/.ssh/id_rsa
+	else
+	    stty -icanon min 0 time 100
+	    read -p "请输入私钥地址(全路经)" addr
+	    stty sane
+	    if [ -z "$addr" ];then
+		echo -e "${MOVE_TO_COL}${GREEN}[${CYAN} OK ${GREEN}]${NORMAL}"
+		return
+	    else
+		cp ${addr} .
+		cp ${addr} /root/.ssh
+		chown ${username}:${username} id_rsa
+		chmod 600 id_rsa
+		chmod 600 /root/.ssh/id_rsa
+	    fi
+	fi
 	echo -e "${MOVE_TO_COL}${GREEN}[${CYAN} OK ${GREEN}]${NORMAL}"
 	cd ${DIR_ROOT}
 }
@@ -400,7 +350,7 @@ set_vim()
 	git config --global user.name tangfu
 	git config --global user.email abctfq2008@gmail.com
 #	cd /run/media/${username}/IMPORTANT/software/Vim/myvim
-	./myvim.sh -i
+	./myvim.sh -i ${username}
 	echo -e "${MOVE_TO_COL}${GREEN}[${CYAN} OK ${GREEN}]${NORMAL}"
 	cd ${DIR_ROOT}
 }
@@ -431,52 +381,12 @@ set_schedule_task()
 set_yum()
 {
 	echo -n "${CYAN}-*- ${GREEN}Set yum${NORMAL}"
-	cd /etc/yum.repos.d
-	if [ ! -d "bak" ];then
-		mkdir -p bak
-		mv *.repo bak
-	else
-		echo -e "${MOVE_TO_COL}${GREEN}[${CYAN} OK ${GREEN}]${NORMAL}"
-		cd ${DIR_ROOT}
-		return;
-	fi
 
-	
-	[ -f yum.conf_bak ] || cp yum.conf yum.conf_bak
-#	sed '/^proxy/d' yum.conf_bak > yum.conf
-#	echo "proxy=http://222.197.181.20:8088/" >> yum.conf
-
-#	[ -f yum.repos.d_bak.tar.bz2 ] || tar cjf yum.repos.d_bak.tar.bz2 yum.repos.d
-#	echo "${GREEN}*****yum.repos.d back to /etc/yum.repos.d_bak.tar.bz2*******${NORMAL}"
-
-	yum_name="$DIR_ROOT/yum.repos.d"
-	for((i=1;1;))
-	do
-		if [ -d "$yum_name" ] ;then
-			cp -a $yum_name/* /etc/yum.repos.d/ >/dev/null
-			chown root:root /etc/yum.repos.d/* >/dev/null
-			chmod 644 /etc/yum.repos.d/* >/dev/null			 
-			break
-		else
-			find_path "请输入yum.repos.d存放地址(FULL_PATH):" yum_name
-#			read -p "请输入yum.repos.d存放地址(FULL_PATH):" yum_name
-			i=$[$i+1]
-			if [ $i < 5 ];then
-				continue
-			else
-				break
-			fi
-		fi
-	done
+	cp *.repo /etc/yum.repos.d 2>/dev/null
 	#rpm -ivh http://linuxdownload.adobe.com/adobe-release/adobe-	release-i386-1.0-1.noarch.rpm
-	rpm -ivh /run/media/tangfu/IMPORTANT/backup/fedora备份/adobe-release-i386-1.0-1.noarch.rpm >/dev/null
+	rpm -ivh fedora/yum/adobe-release-i386-1.0-1.noarch.rpm >/dev/null
 	rpm --import /etc/pki/rpm-gpg/RPM-GPG-KEY-adobe-linux >/dev/null
-#	yum clean all 2>>${DIR_ROOT}/error_sh 1>/dev/null && yum makecache 2>>${DIR_ROOT}/error_sh 1>/dev/null
-	if [ $i = 1 ];then
-		echo -e "${MOVE_TO_COL}${GREEN}[${CYAN} OK ${GREEN}]${NORMAL}"
-	else
-		echo -e "${MOVE_TO_COL}${GREEN}[${CYAN} FALSE ${GREEN}]${NORMAL}"
-	fi
+	echo -e "${MOVE_TO_COL}${GREEN}[${CYAN} OK ${GREEN}]${NORMAL}"
 	cd ${DIR_ROOT}
 
 
@@ -726,15 +636,12 @@ INFO_END
 #trap "" 2
 trap "" 3
 #DIR_ROOT="/run/media/${username}/IMPORTANT/backup/fedora备份"
-DIR_ROOT=`pwd`
-username=`users | awk '{print $1}'`
 #bash -e
 clear
 set_echo
 message
 echo "${WHITE}[${GREEN} 开始设置 ${WHITE}]${NORMAL}" 
 echo
-check
 version=`cat /etc/fedora-release | awk '{print $3}'`
 set_font
 set_sudoer

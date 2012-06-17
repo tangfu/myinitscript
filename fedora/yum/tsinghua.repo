@@ -1,0 +1,123 @@
+
+#old:	ftp://ftp3.tsinghua.edu.cn	(mirror)
+
+#new:	http://mirrors.tuna.tsinghua.edu.cn/ 
+
+
+
+#/**************************更名为[tsinghua-fedora.repo]************************/
+[tsinghua-fedora]
+name=Fedora $releasever - $basearch - Fedora
+failovermethod=priority
+baseurl=http://mirrors.tuna.tsinghua.edu.cn/fedora/releases/$releasever/Fedora/$basearch/os/
+mirrorlist=http://mirrors.fedoraproject.org/mirrorlist?repo=updates-released-f$releasever&arch=$basearch
+enabled=0
+gpgcheck=1
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-fedora-$basearch
+
+#/**************************更名为[tsinghua-everything.repo]************************/
+[tsinghua-everything]
+name=Fedora $releasever - $basearch - Everything
+failovermethod=priority
+baseurl=http://mirrors.tuna.tsinghua.edu.cn/fedora/releases/$releasever/Everything/$basearch/os/
+mirrorlist=http://mirrors.fedoraproject.org/mirrorlist?repo=updates-released-f$releasever&arch=$basearch
+enabled=1
+gpgcheck=1
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-fedora-$basearch
+
+
+
+#/**************************更名为[tsinghua-updates.repo]************************/
+[tsinghua-updates]
+name=Fedora $releasever - $basearch - Updates
+failovermethod=priority
+baseurl=http://mirrors.tuna.tsinghua.edu.cn/fedora/updates/$releasever/$basearch/
+mirrorlist=http://mirrors.fedoraproject.org/mirrorlist?repo=updates-released-f$releasever&arch=$basearch
+enabled=1
+gpgcheck=1
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-fedora-$basearch
+
+[tsinghua-updates-debuginfo]
+name=Fedora $releasever - $basearch - Updates - Debug
+failovermethod=priority
+＃baseurl=http://mirrors.tuna.tsinghua.edu.cn/fedora/updates/$releasever/$basearch/debug/
+mirrorlist=http://mirrors.fedoraproject.org/mirrorlist?repo=updates-released-debug-f$releasever&arch=$basearch
+enabled=0
+gpgcheck=1
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-fedora-$basearch
+
+[tsinghua-updates-source]
+name=Fedora $releasever - Updates Source
+failovermethod=priority
+＃baseurl=http://mirrors.tuna.tsinghua.edu.cn/fedora/updates/$releasever/SRPMS/
+mirrorlist=http://mirrors.fedoraproject.org/mirrorlist?repo=updates-released-source-f$releasever&arch=$basearch
+enabled=0
+gpgcheck=1
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-fedora-$basearch
+
+
+################################################################
+#/**************************更名为[tsinghua-updates-testing.repo]************************/
+[tsinghua-updates-testing]
+name=Fedora $releasever - $basearch - Updates -Testing
+failovermethod=priority
+baseurl=http://mirrors.tuna.tsinghua.edu.cn/fedora/updates/testing/$releasever/$basearch/
+mirrorlist=https://mirrors.fedoraproject.org/metalink?repo=updates-testing-source-f$releasever&arch=$basearch
+enabled=0
+gpgcheck=1
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-fedora-$basearch
+
+
+#################################################################################################
+#rpmfusion更新源
+#/****************更名为[tsinghua-rpmfusion.repo]*********/
+
+[tsinghua-rpmfusion-free]
+name=RPM Fusion for Fedora $releasever - Free
+baseurl=http://mirrors.tuna.tsinghua.edu.cn/rpmfusion/free/fedora/releases/$releasever/Everything/$basearch/os/
+mirrorlist=http://mirrors.rpmfusion.org/mirrorlist?repo=free-fedora-$releasever&arch=$basearch
+enabled=1
+gpgcheck=1
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-rpmfusion-free-fedora
+
+[tsinghua-rpmfusion-free-debuginfo]
+name=RPM Fusion for Fedora $releasever - Free - Debug
+＃baseurl=http://mirrors.tuna.tsinghua.edu.cn/rpmfusion/free/fedora/releases/$releasever/Everything/$basearch/debug/
+mirrorlist=http://mirrors.rpmfusion.org/mirrorlist?repo=free-fedora-debug-$releasever&arch=$basearch
+enabled=0
+gpgcheck=1
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-rpmfusion-free-fedora
+
+[tsinghua-rpmfusion-free-source]
+name=RPM Fusion for Fedora $releasever - Free - Source
+＃baseurl=http://mirrors.tuna.tsinghua.edu.cn/rpmfusion/free/fedora/releases/$releasever/Everything/$basearch/source/SRPMS/
+mirrorlist=http://mirrors.rpmfusion.org/mirrorlist?repo=free-fedora-source-$releasever&arch=$basearch
+enabled=0
+gpgcheck=1
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-rpmfusion-free-fedora
+
+
+#/**********************更名为［rpmfusion-nonfree.repo]***/
+[tsinghua-rpmfusion-nonfree]
+name=RPM Fusion for Fedora $releasever - Nonfree
+baseurl=http://mirrors.tuna.tsinghua.edu.cn/rpmfusion/nonfree/fedora/releases/$releasever/Everything/$basearch/os/
+mirrorlist=http://mirrors.rpmfusion.org/mirrorlist?repo=nonfree-fedora-$releasever&arch=$basearch
+enabled=1
+gpgcheck=1
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-rpmfusion-nonfree-fedora
+
+[tsinghua-rpmfusion-nonfree-debuginfo]
+name=RPM Fusion for Fedora $releasever - Nonfree - Debug
+＃baseurl=http://mirrors.tuna.tsinghua.edu.cn/rpmfusion/nonfree/fedora/releases/$releasever/Everything/$basearch/debug/
+mirrorlist=http://mirrors.rpmfusion.org/mirrorlist?repo=nonfree-fedora-debug-$releasever&arch=$basearch
+enabled=0
+gpgcheck=1
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-rpmfusion-nonfree-fedora
+
+[tsinghua-rpmfusion-nonfree-source]
+name=RPM Fusion for Fedora $releasever - Nonfree - Source
+＃baseurl=http://mirrors.tuna.tsinghua.edu.cn/rpmfusion/nonfree/fedora/releases/$releasever/Everything/source/SRPMS/
+mirrorlist=http://mirrors.rpmfusion.org/mirrorlist?repo=nonfree-fedora-source-$releasever&arch=$basearch
+enabled=0
+gpgcheck=1
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-rpmfusion-nonfree-fedora

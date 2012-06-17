@@ -1,0 +1,71 @@
+#!/bin/sh
+
+set_echo()
+{
+	NORMAL="$(echo -ne '\033[0;39m')"
+	RED="$(echo -ne '\033[1;31m')"
+	GREEN="$(echo -ne '\033[1;32m')"
+	YELLOW="$(echo -ne '\033[1;33m')"
+	BLUE="$(echo -ne '\033[1;34m')"
+	MAGENTA="$(echo -ne '\033[1;35m')"
+	CYAN="$(echo -ne '\033[1;36m')"
+	WHITE="$(echo -ne '\033[1;37m')"
+	MOVE_TO_COL="$(echo -en '\033[72G')"
+}
+
+relese()
+{
+	DIST=none
+
+# detect mandriva first, fo mandriva provides redhat-release
+	if [ -f /etc/mandriva-release ] ; then
+		DIST=mandriva
+		VERSION=`cat /etc/mandriva-release`
+	elif [ -f /etc/fedora-release ] ; then
+		DIST=fedora
+		VERSION=`cat /etc/fedora-release`
+	elif [ -f /etc/redhat-release ] ; then
+		DIST=fedora
+		VERSION=`cat /etc/redhat-release`
+	elif [ -f /etc/centos-release ] ; then
+		DIST=centos
+		VERSION=`cat /etc/centos-release`
+	elif [ -f /etc/debian-release ] ; then
+		DIST=debian
+		VERSION=`cat /etc/debian-release`
+	elif [ -f /etc/SuSE-release ] ; then
+		DIST=opensuse
+		VERSION=`cat /etc/SuSE-release`
+	elif [ `cat /etc/issue | grep Ubuntu | wc -l` != 0 ] ; then
+		DIST=debian
+	elif [ `cat /etc/issue | grep Puppy | wc -l` != 0 ] ; then
+		DIST=legacy
+	fi
+}
+
+check()
+{
+	tang=`id|awk -F "[()]" '{print $2}'`
+	if [ "$tang" != "root" ] ;then
+		echo
+		echo "${RED}The script need ${BLUE}root ${RED}privilege${NORMAL}"
+		exit 1
+	fi
+}
+
+exec()
+{
+    check
+    relese
+    if [ -d "$DIST" ];then
+	cd $DIST 
+	. init
+    else
+	echo "${RED}没有相应系统的初始化脚本${NORMAL}"
+    fi
+}
+
+#######################################################################
+DIR_ROOT=`pwd`
+username=`users | awk '{print $1}'`
+exec
