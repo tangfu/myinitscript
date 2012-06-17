@@ -1,0 +1,766 @@
+#!/bin/sh
+#**********************************注意事项*****************************************
+#脚本必须用root运行
+#检验系统是否满足脚本运行条件(是否为fedora,是否为root用户)
+#写一个脚本，作为每次更换fedora的初始工作，这些选项都设置成可选项来实现,设置前先备份
+#网络设置完成后才能使用yum安装软件
+
+#**********************************工作*********************************************
+#1.添加yum，yum makecache,设置yum代理
+#2.设置path(软链接到主目录)
+#4.必要软件的安装QEMU，smplayer，VLC，wine，chrome,nautilus-open-terminal，flash-plugin,gstreamer,rhythmbox,gstreamer-plugins-good gstreamer-plugins-bad gstreamer-plugins-ugly,unrar,gnochm
+#5.网络设置完成后才能使用yum安装软件
+#6.glxinfo | grep direct 如果你看到  direct rendering: Yes  的信息，表明你可以继续安装  Compiz  包
+#看情况安装
+#启用图形化root登录
+
+
+set_echo()
+{
+	NORMAL="$(echo -ne '\033[0;39m')"
+	RED="$(echo -ne '\033[1;31m')"
+	GREEN="$(echo -ne '\033[1;32m')"
+	YELLOW="$(echo -ne '\033[1;33m')"
+	BLUE="$(echo -ne '\033[1;34m')"
+	MAGENTA="$(echo -ne '\033[1;35m')"
+	CYAN="$(echo -ne '\033[1;36m')"
+	WHITE="$(echo -ne '\033[1;37m')"
+	MOVE_TO_COL="$(echo -en '\033[72G')"
+}
+
+relese()
+{
+	DIST=none
+
+# detect mandriva first, fo mandriva provides redhat-release
+	if [ -f /etc/mandriva-release ] ; then
+		DIST=mandriva
+	elif [ -f /etc/fedora-release ] ; then
+		DIST=fedora
+	elif [ -f /etc/redhat-release ] ; then
+		DIST=fedora
+	elif [ -f /etc/centos-release ] ; then
+		DIST=fedora
+	elif [ -f /etc/debian-release ] ; then
+		DIST=debian
+	elif [ -f /etc/SuSE-release ] ; then
+		DIST=suse
+	elif [ `cat /etc/issue | grep Ubuntu | wc -l` != 0 ] ; then
+		DIST=debian
+	elif [ `cat /etc/issue | grep Puppy | wc -l` != 0 ] ; then
+		DIST=legacy
+	fi
+}
+
+check()
+{
+	echo -n "${CYAN}-*- ${GREEN}check script enviroment${NORMAL}" 
+	tang=`id|awk -F "[()]" '{print $2}'`
+	if [ "$tang" != "root" ] ;then
+		echo
+		echo "${RED}The script need ${BLUE}root ${RED}privilege${NORMAL}"
+		exit 1
+	fi
+
+	relese
+	if [ "$DIST" != "fedora" ];then
+		echo
+		echo -e "${RED}脚本仅在中文fedora下使用.${NORMAL}"
+		exit 1
+	fi
+
+	if [ -d $DIR_ROOT ];then
+		:
+	else
+		echo
+		echo -e "${RED}脚本所在目录不存在.${NORMAL}"
+		exit 1
+	fi
+	echo -e "${MOVE_TO_COL}${GREEN}[${CYAN} OK ${GREEN}]${NORMAL}"
+}
+
+message()
+{
+	echo "${CYAN}"
+cat <<End-of-message
+ -------------------------------------
+ 脚本仅在中文fedora下使用.
+ 默认是GNOME桌面,管理员用户.
+ 相关文件需要放到脚本目录.
+ 终端请使用黑底白字.
+
+	   	   tangfu in uestc
+			2009-11-30
+ -------------------------------------
+End-of-message
+
+	echo "${NORMAL}"
+}
+
+set_font()
+{
+	if [ -d /usr/share/fonts/yahei ];then
+		:
+	else
+		cd $DIR_ROOT
+		cp -a yahei /usr/share/fonts/
+		cd /usr/share/fonts/yahei
+		mkfontscale && mkfontdir 2>>${DIR_ROOT}/error_sh
+		fc-cache 2>>${DIR_ROOT}/error_sh
+	fi
+}
+
+set_rm_substitute()
+{
+#	the function does not work in the fedora 14	
+#	be available after reboot
+#	cp /run/media/${username}/IMPORTANT/Study_Materials/OS/linux/Shell与命令/scripts/rm-substitute.sh /etc/profile.d/
+#	chown root:root /etc/profile.d/rm-substitute.sh
+#	chmod 644 /etc/profile.d/rm-substitute.sh
+	[ -e /bin/rm_bak ] || mv /bin/rm /bin/rm_bak 2>>${DIR_ROOT}/error_sh
+	ln -s "/run/media/${username}/IMPORTANT/Study_Materials/OS/linux/Shell与命令/scripts/rm-substitute.sh" /bin/rm 2>>${DIR_ROOT}/error_sh
+}
+
+set_game()
+{
+	[ -z `wine --version 2>/dev/null` ] && yum install wine -y --nogpgcheck
+	cd /run/media/${username}/IMPORTANT/software/linux_software/game
+	cp *.desktop /usr/share/applications/
+	cp *.png /usr/share/pixmaps/
+}
+
+set_server()
+{
+#set ntp server[只设置自己ip所在段的服务]
+	if [ -f /etc/init.d/ntpd ];then
+		cd /etc
+		[ -f ntp_bak.conf ] || cp ntp.conf ntp_bak.conf
+		tar xpvf /run/media/${username}/IMPORTANT/Study_Materials/server/ntp/ntp.conf.tar.gz >/dev/null
+		[ -n `sed -n '/fedora/p' /etc/ntp/step-tickers` ] || echo "0.fedora.pool.ntp.org" >> /etc/ntp/step-tickers
+		[ -n `service ntpd status 2>/dev/null | grep pid` ] || service ntpd start
+		chkconfig --level 35 ntpd on
+	else
+		echo "没有安装ntp时间服务器" >>${DIR_ROOT}/error_sh
+	fi
+#set tsocks
+	if [ -n `which tsocks 2>/dev/null` ];then
+		cp /run/media/${username}/IMPORTANT/Study_Materials/server/proxy/tsocks/tsocks.conf /etc
+		chown root:root tsocks.conf
+		chmod 0644 tsocks.conf
+	else
+		echo "没有安装tsocks代理工具" >>${DIR_ROOT}/error_sh
+	fi
+#set ss5
+	if [ -f /etc/init.d/ss5 ];then
+		cd /etc/opt/ss5
+		[ -f ss5_bak.conf ] || cp ss5.conf ss5_bak.conf
+		[ -f ss5.passwd ] || cp ss5.passwd ss5_bak.passwd
+		cp /run/media/${username}/IMPORTANT/Study_Materials/server/proxy/socks/ss5/ss5配置备份/{ss5.conf,ss5.passwd} .
+		chown root:root *
+		chmod 0644 *
+		[ -n `service ss5 status 2>/dev/null | grep pid` ] || service ss5 start
+	else
+		echo "没有安装ss5代理服务器" >>${DIR_ROOT}/error_sh
+	fi
+#set squid
+	if [ -f /etc/init.d/squid ];then
+		cd /etc/squid/
+		[ -f squid.conf.default ] || cp squid.conf squid.conf.default
+		cp /run/media/${username}/IMPORTANT/Study_Materials/server/proxy/squid/squid配置备份/squid.conf .
+		chown root:squid squid.conf
+		chmod 0644 *
+		[ -n `service squid status 2>/dev/null | grep pid` ] || service squid start
+	else
+		echo "没有安装squid代理服务器" >>${DIR_ROOT}/error_sh
+	fi
+#set dhcpd
+	if [ -f /etc/init.d/dhcpd ];then
+		cd /etc/dhcp
+		[ -f dhcpd_bak.conf ] || cp dhcp.conf dhcp_bak.conf
+		cp /run/media/${username}/IMPORTANT/Study_Materials/server/DHCP/dhcp配置备份/dhcpd.conf .
+		chown root:root *
+		chmod 0644 *
+		[ -n `service dhcpd status 2>/dev/null | grep pid` ] || service dhcpd start
+	else
+		echo "没有安装dhcpd服务器" >>${DIR_ROOT}/error_sh
+	fi
+#set pptpd
+	if [ -f /etc/init.d/pptpd ];then
+		cd /etc/ppp
+		[ -f options_bak.pptpd ] || cp options.pptpd options_bak.pptpd
+		cp /run/media/${username}/IMPORTANT/Study_Materials/server/vpn/PPTP/配置备份/{options.pptpd,chap-secrets} .
+		[ -n `service pptpd status 2>/dev/null | grep pid` ] || service pptpd start
+	else
+		echo "没有安装pptpd服务器" >>${DIR_ROOT}/error_sh
+	fi
+#set openvpn
+	if [ -f /etc/init.d/openvpn ];then
+		cd /etc/openvpn
+		[ -f options_bak.pptpd ] || cp options.pptpd options_bak.pptpd 2>/dev/null
+		cp /run/media/${username}/IMPORTANT/Study_Materials/server/vpn/OpenVPN/配置文件/{server.conf,client.conf,sample.conf} .
+		[  ! -d keys ] && cp -a /run/media/${username}/IMPORTANT/Study_Materials/server/vpn/OpenVPN/配置文件/keys .
+		[ -n `service openvpn status 2>/dev/null | grep pid` ] || service pptpd start
+	else
+		echo "没有安装openvpn服务器" >>${DIR_ROOT}/error_sh
+	fi
+
+#set openssh
+	if [ -f /etc/init.d/sshd ];then
+		[ ${username} = "tangfu" ] && cp /run/media/${username}/IMPORTANT/Study_Materials/server/SSH/配置文件/密钥文件/* /home/${username}/.ssh/
+		cat /run/media/${username}/IMPORTANT/Study_Materials/server/SSH/配置文件/密钥文件/id_rsa.pub > /home/${username}/.ssh/authorized_keys2
+		chkconfig --level 35 sshd on
+	else
+		echo "没有安装ssh服务器" >>${DIR_ROOT}/error_sh
+	fi
+
+#set vnc
+	if [ -f /etc/init.d/vncserver ];then
+		[ ! -f /etc/sysconfig/vncservers_bak ] && cp /etc/sysconfig/vncservers /etc/sysconfig/vncservers_bak
+		echo -e "VNCSERVERS=\"1:${username}\"\nVNCSERVERARGS[1]=\"-alwaysshared\"" >>/etc/sysconfig/vncservers
+		[  ! -f "/home/${username}/.vnc/xstartup_bak" ] && [ -f "/home/${username}/.vnc/xstartup" ] && mv "/home/${username}/.vnc/xstartup" "/home/${username}/.vnc/xstartup_bak"
+		
+		cp "/run/media/${username}/IMPORTANT/Study_Materials/server/Remote Desktop/VNC/配置备份/vnc用户目录/"* "/home/${username}/.vnc"	#need passwd, otherwise vncserver can't be started
+#		dialog --clear --insecure --passwordbox input 0 0 2>_1.txt
+		chkconfig --level 5 vncserver on
+		iptables -A INPUT -m state --state NEW -m tcp -p tcp --dport 5901 -j ACCEPT
+	else
+		echo "没有安装vnc服务器" >>${DIR_ROOT}/error_sh
+	fi
+
+#set rsync
+	 [ ! -f /etc/rsyncd_bak.conf ] && [ -f /etc/rsyncd.conf ] && mv /etc/rsyncd.conf /etc/rsyncd_bak.conf
+	cp -a /run/media/${username}/IMPORTANT/Study_Materials/server/sync/rsync/配置/{rsyncd,rsyncd.conf,rsyncd.motd} /etc
+	chown root:root /etc/rsyncd -Rf
+	chown root:root /etc/rsyncd.conf
+	chmod 644 /etc/rsyncd.conf
+	chmod 400 /etc/rsyncd/public.pas
+
+#set mysql
+	if [ -f /etc/init.d/mysqld ];then
+		[ -f /etc/my_bak.cnf ] && mv /etc/my.cnf /etc/my_bak.cnf
+		cp /run/media/${username}/IMPORTANT/Study_Materials/server/Database/mysql/配置文件/Linux/my.cnf /etc
+		chown root:root /etc/my.cnf
+		chmod 644 /etc/my.cnf
+		chkconfig --level 35 mysqld on
+	else
+		echo "没有安装mysql服务器" >>${DIR_ROOT}/error_sh
+	fi
+
+#set Apache(httpd)
+	if [ -f /etc/init.d/httpd ];then
+		cp -a /run/media/${username}/IMPORTANT/software/Server/{daloradius-0.9-8,dialup_admin} /var/www/html
+		chown root:root -R /var/www/html/{daloradius-0.9-8,dialup_admin}
+		chmod 755 -R /var/www/html/{daloradius-0.9-8,dialup_admin}
+
+		chkconfig --level 35 httpd on
+	else
+		echo "没有安装httpd服务器" >>${DIR_ROOT}/error_sh
+	fi
+
+#set postfix(stmp)
+	if [ -f /etc/init.d/postfix ];then
+		[ -f /etc/postfix/main.cf_bak ] || cp /etc/postfix/main.cf /etc/postfix/main.cf_bak
+		cp /run/media/${username}/IMPORTANT/Study_Materials/server/Mail/Postfix/配置备份/main.cf /etc/postfix/
+		chkconfig --level 35 postfix on
+		systemctl restart postfix.service 2>${DIR_ROOT}/error_sh
+	else
+		echo "没有安装postfix服务器" >>${DIR_ROOT}/error_sh
+	fi
+
+#set vsftpd
+	if [ -f /etc/init.d/vsftpd ];then
+		[ -f /etc/vsftpd/vsftpd.conf_bak ] || cp /etc/vsftpd/vsftpd.conf /etc/vsftpd/vsftpd.conf_bak
+		cp /run/media/${username}/IMPORTANT/Study_Materials/server/FTP/vsftp/配置文件/vsftpd.conf /etc/vsftpd/
+		iptables -A INPUT -m state --state NEW -m tcp -p tcp --dport 20 -j ACCEPT
+		iptables -A INPUT -m state --state NEW -m tcp -p tcp --dport 21 -j ACCEPT
+		iptables -A INPUT -m state --state NEW -m tcp -p tcp --dport 10000:10010 -j ACCEPT
+		chkconfig --level 35 vsftpd on
+		systemctl restart vsftpd.service 2>${DIR_ROOT}/error_sh
+	else
+		echo "没有安装vsftp服务器" >>${DIR_ROOT}/error_sh 
+	fi
+
+#set SVN	
+	if [ -f /etc/init.d/svnd ];then
+		echo "已经安装svnd 服务" >>${DIR_ROOT}/error_sh
+	else
+		mkdir -p /home/${username}/svn_repos
+		svnadmin create /home/${username}/svn_repos
+		cp /run/media/${username}/IMPORTANT/Study_Materials/server/Version Control System/svn/配置备份/svnd ~/svnd
+		chmod +x ~/svnd
+		~/svnd install
+		rm ~/svnd
+	fi
+
+#set GIT
+	if [ -f /etc/xinetd.d/git ];then
+		mkdir -p /home/${username}/git_repos
+		git init --bare /home/${username}/git_repos/public
+		cp "/run/media/${username}/IMPORTANT/Study_Materials/server/Version Control System/git/配置文件/git" /etc/xinetd.d/git
+		chmod 644 /etc/xinetd.d/git
+		chown root:root /etc/xinetd.d/git
+		sudo service xinetd restart
+	else
+		echo "没有安装git-daemon" >>${DIR_ROOT}/error_sh
+	fi
+
+#set freeradius
+
+
+
+}
+
+set_path()
+{
+	echo -n "${CYAN}-*- ${GREEN}设置个人程序到PATH${NORMAL}"
+	
+	cd /home/${username}
+#	cp /run/media/${username}/IMPORTANT/Study_Materials/OS/linux/Shell与命令/scripts/mount-disk /bin 2>/dev/null
+#	cp /run/media/${username}/IMPORTANT/Study_Materials/OS/linux/Shell与命令/scripts/umount-disk /bin 2>/dev/null
+#	chown root:root /bin/{mount-disk,umount-disk}
+#	chmod 755 /bin/{mount-disk,umount-disk}
+#	chmod u+s /bin/{mount-disk,umount-disk}
+	[ -e "scripts" ] || ln -s "/run/media/${username}/IMPORTANT/Study_Materials/OS/linux/Shell与命令/scripts" . 2>>${DIR_ROOT}/error_sh
+	[ -e "Py-script" ] || ln -s "/run/media/${username}/IMPORTANT/Study_Materials/Program/Python/Py-script" . 2>>${DIR_ROOT}/error_sh
+	[ -e "PHP-Script" ] || ln -s "/run/media/${username}/IMPORTANT/Study_Materials/Program/PHP/PHP-Script" . 2>>${DIR_ROOT}/error_sh
+	[ -e "mycode" ] || ln -s "/run/media/${username}/IMPORTANT/Study_Materials/Program/mycode" . 2>>${DIR_ROOT}/error_sh
+	[ -e "License" ] || ln -s "/run/media/${username}/IMPORTANT/Study_Materials/Program/版本与协议/License" . 2>>${DIR_ROOT}/error_sh
+	[ -e "快捷方式" ] || ln -s "/run/media/${username}/IMPORTANT/software/linux_software/快捷方式" . 2>>${DIR_ROOT}/error_sh
+	[ -e "Andriod-SDK" ] || ln -s "/run/media/${username}/IMPORTANT/software/android-sdk-linux" Andriod-SDK 2>>${DIR_ROOT}/error_sh
+	[ -f "要做的.txt" ] || ln -s -f "/run/media/${username}/IMPORTANT/要做的.txt" . 2>>${DIR_ROOT}/error_sh
+
+
+	cp $DIR_ROOT/SciTEUser.properties /home/${username}/.SciTEUser.properties
+	chown ${username}:${username} /home/${username}/.SciTEUser.properties
+	cp -a $DIR_ROOT/nautilus-scripts/* /home/${username}/.gnome2/nautilus-scripts/
+	chown -R ${username}:${username} /home/${username}/.gnome2/nautilus-scripts/*
+	chmod -R a+x /home/${username}/.gnome2/nautilus-scripts/*
+	cp -a $DIR_ROOT/mpd /home/${username}
+#	mkdir -p /home/${username}/.remmina
+#	cp -a $DIR_ROOT/remmina/* /home/${username}/.remmina
+#	chown -R tangfu:tangfu .remmina
+#	[ -z `cat /etc/profile | grep ulimit` ] || echo "ulimit -c unlimited" >> /etc/profile
+	
+	[ -e .bashrc_bak ] || cp .bashrc .bashrc_bak
+	[ -z `awk "/home/{print $2}" .bashrc` ] 2>/dev/null && echo -e "export PATH=\$PATH:/home/$username/scripts:/home/$username/scripts/bash_library:/home/$username/Py-script:/home/$username/PHP-Script:/home/$username/Andriod-SDK:/home/$username/快捷方式:/home/$username/mycode:/run/media/${username}/IMPORTANT/software/linux_software/aspersa\nexport SVN_EDITOR=vim\nexport CDPATH=.:~:/etc:/var:/usr:/usr/local:/run/media/${username}" >> /home/$username/.bashrc
+	[ -z `awk "/bashmarks.sh/{print $2}" .bash_profile` ] 2>/dev/null && echo "source ~/scripts/bashmarks.sh" >> /home/$username/.bashrc
+
+	if [ -z `awk '/run\/media\/"${username}"\/IMPORTANT/{print $2}' .gtk-bookmarks` ] 2>/dev/null;then
+		cat<<-BM 1>>/home/$username/.gtk-bookmarks
+			file:///run/media/${username}/IMPORTANT/Study_Materials/OS/linux linux
+			file:///run/media/${username}/IMPORTANT/Study_Materials/OS/linux/Shell%E4%B8%8E%E5%91%BD%E4%BB%A4 Shell与命令
+			file:///run/media/${username}/IMPORTANT/software/linux_software linux_software
+			file:///run/media/${username}/IMPORTANT/Study_Materials/Program/kernel kernel
+			file:///run/media/${username}/GAME/%E8%BD%AF%E4%BB%B6/LINUX LINUX软件
+			file:///run/media/${username}/IMPORTANT/Study_Materials/Program Program
+			file:///run/media/${username}/IMPORTANT/backup/fedora%E5%A4%87%E4%BB%BD fedora备份
+			file:///run/media/${username}/IMPORTANT/Study_Materials/server server
+			file:///run/media/${username}/IMPORTANT/COMPRESS/boot-technology boot-technology
+			file:///run/media/${username}/WIN_7/Users/TANGFU/Desktop windows桌面
+			file:///run/media/${username}/big_file/project project
+			file:///run/media/${username}/big_file/SYSTEM SYSTEM
+		BM
+	fi
+
+	cat<<-GPGSET 1>>/home/$username/.rpmmacros
+		%_signature gpg
+		%_gpg_path ~/.gnupg
+		%_gpg_name tangfu
+	GPGSET
+	chown tangfu:tangfu /home/$username/.rpmmacros
+	echo -e "${MOVE_TO_COL}${GREEN}[${CYAN} OK ${GREEN}]${NORMAL}"
+	cd ${DIR_ROOT}
+}
+
+set_ssh_key()
+{
+	echo -n "${CYAN}-*- ${GREEN}设置个ssh个人密钥${NORMAL}"
+	[ ! -d /home/${username}/.ssh ] && mkdir /home/${username}/.ssh
+	cd /home/${username}/.ssh
+	cp /run/media/${username}/IMPORTANT/Study_Materials/server/SSH/我的密钥对/id_rsa .
+	cp /run/media/${username}/IMPORTANT/Study_Materials/server/SSH/我的密钥对/id_rsa /root/.ssh
+#	cat /run/media/${username}/IMPORTANT/Study_Materials/server/SSH/我的密钥对/id_rsa.pub >> authorized_keys 
+	chown ${username}:${username} id_rsa
+	chmod 600 id_rsa
+	chmod 600 /root/.ssh/id_rsa
+	echo -e "${MOVE_TO_COL}${GREEN}[${CYAN} OK ${GREEN}]${NORMAL}"
+	cd ${DIR_ROOT}
+}
+set_vim()
+{	
+	echo -n "${CYAN}-*- ${GREEN}Set vim${NORMAL}"
+	cd /home/${username}
+	if [ -d myvim ];then
+		cd ${DIR_ROOT}
+		echo -e "${MOVE_TO_COL}${GREEN}[${CYAN} OK ${GREEN}]${NORMAL}"
+		return 0
+	fi
+	git clone git@github.com:tangfu/myvim.git >/dev/null 2>/dev/null
+	cd myvim
+	git config --global user.name tangfu
+	git config --global user.email abctfq2008@gmail.com
+#	cd /run/media/${username}/IMPORTANT/software/Vim/myvim
+	./myvim.sh -i
+	echo -e "${MOVE_TO_COL}${GREEN}[${CYAN} OK ${GREEN}]${NORMAL}"
+	cd ${DIR_ROOT}
+}
+set_library()
+{
+	echo -n "${CYAN}-*- ${GREEN}Set personal library${NORMAL}"
+	cd /home/${username}
+	mkdir -p library
+	git clone git@github.com:tangfu/simple-timer.git >/dev/null 2>/dev/null
+	git clone git@github.com:tangfu/em-shell.git >/dev/null 2>/dev/null
+	git clone git@github.com:tangfu/threadpool.git >/dev/null 2>/dev/null
+	git clone git@github.com:tangfu/config_parse.git >/dev/null 2>/dev/null
+	git clone git@github.com:tangfu/simple-log.git >/dev/null 2>/dev/null
+	echo -e "${MOVE_TO_COL}${GREEN}[${CYAN} OK ${GREEN}]${NORMAL}"
+	cd ${DIR_ROOT}
+}
+set_schedule_task()
+{
+	echo -n "${CYAN}-*- ${GREEN}设置cron计划任务${NORMAL}"
+#	直接保存即可(:wq)
+	crontab -u ${username} -e 2>/dev/null
+	echo -e "0 16 */15 * * /home/${username}/scripts/update-*\n*/30 * * * * check_router_wanip\n0 */2 * * * export DISPLAY=:0.0 && notify-send -t 5 \"\`date '+%F %T'\` 该休息了\"
+" > "/var/spool/cron/${username}"
+
+	echo -e "${MOVE_TO_COL}${GREEN}[${CYAN} OK ${GREEN}]${NORMAL}"
+}
+
+set_yum()
+{
+	echo -n "${CYAN}-*- ${GREEN}Set yum${NORMAL}"
+	cd /etc/yum.repos.d
+	if [ ! -d "bak" ];then
+		mkdir -p bak
+		mv *.repo bak
+	else
+		echo -e "${MOVE_TO_COL}${GREEN}[${CYAN} OK ${GREEN}]${NORMAL}"
+		cd ${DIR_ROOT}
+		return;
+	fi
+
+	
+	[ -f yum.conf_bak ] || cp yum.conf yum.conf_bak
+#	sed '/^proxy/d' yum.conf_bak > yum.conf
+#	echo "proxy=http://222.197.181.20:8088/" >> yum.conf
+
+#	[ -f yum.repos.d_bak.tar.bz2 ] || tar cjf yum.repos.d_bak.tar.bz2 yum.repos.d
+#	echo "${GREEN}*****yum.repos.d back to /etc/yum.repos.d_bak.tar.bz2*******${NORMAL}"
+
+	yum_name="$DIR_ROOT/yum.repos.d"
+	for((i=1;1;))
+	do
+		if [ -d "$yum_name" ] ;then
+			cp -a $yum_name/* /etc/yum.repos.d/ >/dev/null
+			chown root:root /etc/yum.repos.d/* >/dev/null
+			chmod 644 /etc/yum.repos.d/* >/dev/null			 
+			break
+		else
+			find_path "请输入yum.repos.d存放地址(FULL_PATH):" yum_name
+#			read -p "请输入yum.repos.d存放地址(FULL_PATH):" yum_name
+			i=$[$i+1]
+			if [ $i < 5 ];then
+				continue
+			else
+				break
+			fi
+		fi
+	done
+	#rpm -ivh http://linuxdownload.adobe.com/adobe-release/adobe-	release-i386-1.0-1.noarch.rpm
+	rpm -ivh /run/media/tangfu/IMPORTANT/backup/fedora备份/adobe-release-i386-1.0-1.noarch.rpm >/dev/null
+	rpm --import /etc/pki/rpm-gpg/RPM-GPG-KEY-adobe-linux >/dev/null
+#	yum clean all 2>>${DIR_ROOT}/error_sh 1>/dev/null && yum makecache 2>>${DIR_ROOT}/error_sh 1>/dev/null
+	if [ $i = 1 ];then
+		echo -e "${MOVE_TO_COL}${GREEN}[${CYAN} OK ${GREEN}]${NORMAL}"
+	else
+		echo -e "${MOVE_TO_COL}${GREEN}[${CYAN} FALSE ${GREEN}]${NORMAL}"
+	fi
+	cd ${DIR_ROOT}
+
+
+}
+
+set_sudoer()
+{
+	echo -n "${CYAN}-*- ${GREEN}sudo enable${NORMAL}"
+	cd /etc
+	[ -f sudoers_bak ] || cp sudoers sudoers_bak
+	chmod a+w sudoers
+	if [ -z `cat /etc/sudoers | grep ${username}` ] 2>/dev/null;then
+		sed "/^root\t/a\\${username}\tALL=(ALL)\tNOPASSWD:ALL" sudoers_bak > sudoers
+#		echo -e "${MOVE_TO_COL}${GREEN}[${CYAN} OK ${GREEN}]${NORMAL}"
+	fi
+	chmod a-w sudoers
+	echo -e "${MOVE_TO_COL}${GREEN}[${CYAN} OK ${GREEN}]${NORMAL}"
+	cd ${DIR_ROOT}
+}
+
+set_root_login()
+{
+	echo -n "${CYAN}-*- ${GREEN}Setup root login${NORMAL}"
+	cd /etc/pam.d
+	[ -f gdm_bak ] || cp gdm gdm_bak
+	[ -f gdm-password_bak -a -f gdm-password ] || cp gdm-password gdm-password_bak
+	sed 's/^\(.*root.*\)/#\1/' gdm_bak > gdm
+	[ -f gdm-passwd ] && sed 's/^\(.*root.*\)/#\1/p' gdm-password_bak > gdm-password
+	echo -e "${MOVE_TO_COL}${GREEN}[${CYAN} OK ${GREEN}]${NORMAL}"
+	cd ${DIR_ROOT}
+}
+
+yum_install()
+{
+	for((i=1;i==1;))
+	do
+		yum install $@ --nogpgcheck --skip-broken -y
+		i=$?
+	done
+}
+
+src_install()
+{
+	packagedir=""
+	[ -z `echo $1 | sed -n '/\.tar\.\(gz\|bz2\)$/p'` ] || packagedir=$(echo $1 | sed 's/.tar.*//')
+	if [ -z "$packagedir" ] ;then
+		echo "$1安装出错" >>${DIR_ROOT}/error_sh
+	else
+		tar xf "$1" 2>>${DIR_ROOT}/error_sh
+	fi
+	cd ${packagedir}
+	if [ -e configure ] ;then
+		./configure --prefix=/usr
+		make
+		make install
+	fi
+	cd ..
+	rm -rf ${packagedir}
+	cd ${DIR_ROOT}
+}
+
+install_software()
+{
+	INP=""
+	temp=1
+	for((;1;))
+	do
+		read -p "请确认你的连接到了外网[yes|no]: " INP
+		if [ "$INP" == 'yes' ]; then
+			break
+		elif [ "$INP" == "no" ]; then
+			echo "${RED}请连接好了网络之后再运行脚本${NORMAL}"
+			exit 1
+		else
+			continue
+		fi
+	done
+	while [ $temp == 1 ]
+	do
+	echo "${CYAN}-*- ${GREEN}install software${NORMAL}"
+cat <<choices
+ --------------------------------------
+	1*) yum-fastestmirror插件,yumex,flash插件.				【建议安装】
+	2*) nautilus-open-terminal和sudo的代码补全功能，源代码高亮.	【建议安装】
+	3) QEMU.
+	4*) chm工具,leafpad编辑器,pdf编辑器.					【建议安装】
+	5*) rar和7z等压缩工具.								【建议安装】
+	6) fctix输入法.
+	7*) rhythmbox和音频解码器等音频工具.							【建议安装】
+	8) Compiz-Fusion等图形包.
+	9) smplayer(s) 或者 vlc(v)视频工具.
+	10)添加嵌入式开发套件(mincomn和arm-gp).
+	11*)添加系统检测工具(sysstat,iptraf,htop,lshw等)			【建议安装】
+	12*)安装服务器套件tsocks(t),vnc(v),phpldapadmin+phpMyAdmin(p)	
+	13*)数据恢复工具TestDisk & Photoec & ext3grep			【建议安装】
+	14*)网络工具Wireshark,rdesktop,tsclient,remmina			【建议安装】
+	15*)证书制作工具GnuPG,GnuPG2,tinyca2,GPA,XCA			【建议安装】
+	16*)windows和linux传输工具lrzsz 						【建议安装】
+	17)账户工具accountsdialog							【建议安装】
+	18*)终端工具ranger，ttyutil, w3m系统设置工具		【建议安装】
+	19*)词典工具stardict，goldendict						【建议安装】
+	20*)编程相关codeblck，ddd，splint，lcov, gcc相关套件		【建议安装】
+	21)文档工具abiword，gnumeric	, dia					【建议安装】
+	22)杂项
+
+	80*)自定义软件安装选项(本地|绿色软件install)				【建议安装】
+	100)退出						
+- -------------------------------------
+
+choices
+	echo -n "${BLUE}选择你需要的,每个选项用空格隔开，例如：1 2 9s(输入未识别的选项则安装默认套件)${NORMAL}: " 
+	unset list
+	stty -icanon min 0 time 100
+	read list
+	stty sane
+	echo "使用${list:= 1 2 3 4 5 6 7 9 11 12 13 14 15 16 18 19 20 21 80 100}"
+	install_list=""
+	for choice in $list
+	do
+		case "$choice" in
+		1) install_list="yum-fastestmirror axel yumex flash-plugin"
+		;;
+		2) install_list="nautilus-open-terminal bash-completion gshutdown" 
+		#the-board the-board-nautilus
+		;;	
+		3) install_list="qemu qemu-launcher"
+		;;
+		4) install_list="chmsee leafpad ghex pinta"	
+		#mypaint pdfedit
+		;;
+		5) install_list="unrar p7zip"
+		;;
+		6) install_list="fcitx"	
+		;;
+		7) install_list="gstreamer rhythmbox gstreamer-plugins-good gstreamer-plugins-bad gstreamer-plugins-ugly gstreamer-ffmpeg phonon-backend-gstreamer cmus " 
+		#kdenlive audacity easytag audio-convert-mod mpd mpc gmpc
+		;;
+		8) 
+			yum_install mesa-dri-drivers-experimental
+			veriy=`glxinfo | grep direct | grep Yes`
+			if [ -n "$veriy" ] ;then
+				install_list="ccsm emerald-themes compizconfig-backend-gconf fusion-icon-gtk emerald compiz-fusion compiz-fusion-gnome libcompizconfig compiz-gnome compiz-bcop compiz compizconfig-python compiz-fusion-extras compiz-fusion-extras-gnome"
+			else
+				install_list=""
+			fi
+		;;
+		9)
+:<<lsl
+			if [ "$choice"=="3" -o "$choice"=="3vs" -o "$choice"=="3sv" ] ;then
+				install_list="smplayer vlc"
+			elif [ "$choice"=="3s" ] ;then
+				install_list="smplayer"
+			elif [ "$choice"=="3v" ] ;then
+				install_list="vlc"
+			else
+				echo "${RED}软件安装第3项输入错误${NORMAL}" >> ${DIR_ROOT}/error_sh
+				install_list==""
+				sleep 3
+			fi
+lsl
+			install_list="vlc smplayer"
+		;;
+		10)
+			install_list="minicom gtkterm cutecom arm-gp2x-linux-*"
+		;;
+		11)
+			install_list="statgrab-tools sysstat iptraf-ng iperf htop dstat bonnie++ sysbench tiobench lshw lshw-gui inotify-tools gnome-device-manager dmidecode xprobe padevchooser paman pavucontrol systemd-gtk blktrace iotop fio latencytop cpulimit" 
+		#nessus-gui nessus-core nessus-client clamav evtest
+		;;
+		12)
+			install_list="preload tsocks xrdp daemonize"
+		# phpMyAdmin phpldapadmin tigervnc-server
+		;;
+		13)
+			install_list="testdisk ext3grep gdisk"
+		#gparted
+		;;
+		14)
+			install_list="macchanger wireshark wireshark-gnome rdesktop nmap nmap-frontend xchat remmina remmina-plugins* vnstat bwm-ng iptux uget tcping tcptraceroute iftop iperf3 nload nethogs qperf" 
+			#miredo-client libnet libdnet libdnet-devel libpcap libpcap-devel etherape hping3 ntop hosts3d  freenx-server  netgo grsync jnettop aircrack-ng mldonkey mldonkey-gui mldonkey-server
+		;;
+		15)
+			install_list="gnupg2 tinyca2 gpa xca"
+		;;
+		16) 
+			install_list="lrzsz"
+		;;
+		17) 
+			install_list=""
+			#accountsdialog
+		;;
+		18) 
+			install_list="pv byobu xsel gnome-tweak-tool gnome-shell-extension* ranger w3m shutter alacarte synapse ttyutils ffmpeg ffmpeg-* ncurses* tsclient gconf-editor recordmydesktop tmux unetbootin ntfs-config terminator gtkhash-nautilus lcdtest pyroom cronie-anacron"
+		#gnome-do bleachbit conky gnome-applet-sshmenu gnuplot espeak vifm
+		;;
+		19)
+			install_list="stardict stardict-dic-zh_CN stardict-dic-en goldendict"
+		;;
+		20)
+			install_list="astyle insight ddd cgdb colorgcc rpm-sign bashdb lcov oprofile* google-perftools cmake cmake-gui zenity rabbitcvs-* help2man" 
+		#perl-CPAN perl-YAML git-svn git-daemon gitk gdb-gdbserver CUnit splint libmudflap libmudflap-devel alleyoop codeblocks codeblocks-contrib rapidsvn hudson
+		;;
+		21)
+			install_list="dia gedit-beesu-plugin gedit-plugins txt2man scite" 
+		#abiword gnumeric ease chm2pdf graphviz liferea
+		;;
+		22)
+			install_list="chntpw smolt-gui hardinfo gtk-splitter specto ophcrack sys_basher nautilus-search-tool"
+		#faenza-icon-theme gdesklets*
+		;;
+		80)
+			. /media/${username}/IMPORTANT/software/linux_software/install.sh
+		;;
+		*)
+			temp=0
+		;;
+		esac
+		
+		[ -n "$install_list" ] && yum_install $install_list
+		install_list=""
+	done
+
+	done
+	cd ${DIR_ROOT}
+}
+
+set_info() 
+{
+cat <<INFO_END
+ --------------------------------------
+	* 记得手动设置NTFS权限问题，设定fstab中的某些NTFS分区选项，例如添加exec权限
+	* synapse设置自动启动，并改Alt+Space为开启建
+	* remmina设为开机启动，且进入状态栏
+	* 使用fcitx请用im-chooser命令重新切换。fedora下fcitx的字体配置被移进了皮肤目录下，因此进入修改，修改成25即可（/usr/share/fcitx/skin/dark）
+	* gdesklet中的很多插件需要自己配置到桌面上。
+	* 设置账户自动登陆
+	* 8021认证，自行在网络设置里添加
+	* 安装hybird(https://github.com/levin108/hybrid.git)
+					
+ --------------------------------------
+INFO_END	
+}
+
+############################################################################################
+############################################################################################
+
+#trap "" 2
+trap "" 3
+#DIR_ROOT="/run/media/${username}/IMPORTANT/backup/fedora备份"
+DIR_ROOT=`pwd`
+username=`users | awk '{print $1}'`
+#bash -e
+clear
+set_echo
+message
+echo "${WHITE}[${GREEN} 开始设置 ${WHITE}]${NORMAL}" 
+echo
+check
+version=`cat /etc/fedora-release | awk '{print $3}'`
+set_font
+set_sudoer
+set_path
+set_ssh_key
+set_vim
+set_library
+#针对作者
+set_yum
+#set_root_login
+#set_rm_substitute
+#针对作者
+set_schedule_task
+install_software
+#针对作者
+set_game
+#set_server必须在install_software后来执行，因为有些服务器是必须在install_software之后才存在的
+#set_server
+cd  ${DIR_ROOT}
+if [ -s error_sh ] ;then
+	echo -e "\n${YELLOW}脚本执行过程中的错误:"
+	echo -n "${RED}"
+	cat error_sh
+	echo ${NORMAL}
+	rm error_sh
+fi
+set_info
+echo
+echo "${WHITE}[${GREEN} 设置结束 ${WHITE}]${NORMAL}" 
