@@ -1,0 +1,279 @@
+#!/bin/sh
+
+
+message()
+{
+	echo "${CYAN}"
+cat <<End-of-message
+ -------------------------------------
+ 脚本仅在中文openSUSE下使用.
+ 默认是GNOME桌面,管理员用户.
+ 相关文件需要放到脚本目录.
+ 终端请使用黑底白字.
+
+	   	   tangfu in uestc
+			2012-06-18
+ -------------------------------------
+End-of-message
+
+	echo "${NORMAL}"
+}
+
+set_font()
+{
+	if [ -d /usr/share/fonts/yahei ];then
+		:
+	else
+		cd $DIR_ROOT
+		cp -a yahei /usr/share/fonts/
+		cd /usr/share/fonts/yahei
+		unxz *.xz
+		mkfontscale && mkfontdir 2>>${DIR_ROOT}/error_sh
+		fc-cache 2>>${DIR_ROOT}/error_sh
+	fi
+}
+
+set_rm_substitute()
+{
+#	the function does not work in the fedora 14	
+#	be available after reboot
+#	cp /media/${username}/IMPORTANT/Study_Materials/OS/linux/Shell与命令/scripts/rm-substitute.sh /etc/profile.d/
+#	chown root:root /etc/profile.d/rm-substitute.sh
+#	chmod 644 /etc/profile.d/rm-substitute.sh
+	[ -e /bin/rm_bak ] || mv /bin/rm /bin/rm_bak 2>>${DIR_ROOT}/error_sh
+	ln -s "/media/${username}/IMPORTANT/Study_Materials/OS/linux/Shell与命令/scripts/rm-substitute.sh" /bin/rm 2>>${DIR_ROOT}/error_sh
+}
+
+
+set_path()
+{
+	echo -n "${CYAN}-*- ${GREEN}设置个人程序到PATH${NORMAL}"
+	
+	cd /home/${username}
+	[ -e "scripts" ] || ln -s "/media/IMPORTANT/Study_Materials/OS/linux/Shell与命令/scripts" . 2>>${DIR_ROOT}/error_sh
+	[ -e "Py-script" ] || ln -s "/media/IMPORTANT/Study_Materials/Program/Python/Py-script" . 2>>${DIR_ROOT}/error_sh
+	[ -e "PHP-Script" ] || ln -s "/media/IMPORTANT/Study_Materials/Program/PHP/PHP-Script" . 2>>${DIR_ROOT}/error_sh
+	[ -e "mycode" ] || ln -s "/media/IMPORTANT/Study_Materials/Program/mycode" . 2>>${DIR_ROOT}/error_sh
+	[ -e "License" ] || ln -s "/media/IMPORTANT/Study_Materials/Program/版本与协议/License" . 2>>${DIR_ROOT}/error_sh
+	[ -e "快捷方式" ] || ln -s "/media/IMPORTANT/software/linux_software/快捷方式" . 2>>${DIR_ROOT}/error_sh
+	[ -e "Andriod-SDK" ] || ln -s "/media/IMPORTANT/software/android-sdk-linux" Andriod-SDK 2>>${DIR_ROOT}/error_sh
+	[ -f "要做的.txt" ] || ln -s -f "/media/IMPORTANT/要做的.txt" . 2>>${DIR_ROOT}/error_sh
+
+
+	cp $DIR_ROOT/SciTEUser.properties /home/${username}/.SciTEUser.properties
+	chown ${username}:${username} /home/${username}/.SciTEUser.properties
+	cp -a $DIR_ROOT/nautilus-scripts/* /home/${username}/.gnome2/nautilus-scripts/
+	chown -R ${username}:${username} /home/${username}/.gnome2/nautilus-scripts/*
+	chmod -R a+x /home/${username}/.gnome2/nautilus-scripts/*
+	
+	[ -e .bashrc_bak ] || cp .bashrc .bashrc_bak
+	[ -z `awk "/home/{print $2}" .bashrc` ] 2>/dev/null && echo -e "export PATH=\$PATH:/home/$username/scripts:/home/$username/scripts/bash_library:/home/$username/Py-script:/home/$username/PHP-Script:/home/$username/Andriod-SDK:/home/$username/快捷方式:/home/$username/mycode:/media/${username}/IMPORTANT/software/linux_software/aspersa\nexport SVN_EDITOR=vim\nexport CDPATH=.:~:/etc:/var:/usr:/usr/local:/run/media/${username}" >> /home/$username/.bashrc
+	[ -z `awk "/bashmarks.sh/{print $2}" .bash_profile` ] 2>/dev/null && echo "source ~/scripts/bashmarks.sh" >> /home/$username/.bashrc
+
+	if [ -z `awk '\/media\/IMPORTANT/{print $2}' .gtk-bookmarks` ] 2>/dev/null;then
+		cat<<-BM 1>>/home/$username/.gtk-bookmarks
+			file:///media/IMPORTANT/Study_Materials/OS/linux linux
+			file:///media/IMPORTANT/Study_Materials/OS/linux/Shell%E4%B8%8E%E5%91%BD%E4%BB%A4 Shell与命令
+			file:///media/IMPORTANT/software/linux_software linux_software
+			file:///media/IMPORTANT/Study_Materials/Program/kernel kernel
+			file:///media/GAME/%E8%BD%AF%E4%BB%B6/LINUX LINUX软件
+			file:///media/IMPORTANT/Study_Materials/Program Program
+			file:///media/IMPORTANT/backup/fedora%E5%A4%87%E4%BB%BD fedora备份
+			file:///media/IMPORTANT/Study_Materials/server server
+			file:///media/IMPORTANT/COMPRESS/boot-technology boot-technology
+			file:///media//WIN-7/Users/TANGFU/Desktop windows桌面
+			file:///media/big-file/project project
+			file:///media/big-file/SYSTEM SYSTEM
+		BM
+	fi
+
+	echo -e "${MOVE_TO_COL}${GREEN}[${CYAN} OK ${GREEN}]${NORMAL}"
+	cd ${DIR_ROOT}
+}
+
+set_ssh_key()
+{
+	echo -n "${CYAN}-*- ${GREEN}设置个ssh个人密钥${NORMAL}"
+	[ ! -d /home/${username}/.ssh ] && mkdir -p /home/${username}/.ssh
+	cd /home/${username}/.ssh
+	if [ -f ${ROOT_DIR}/common/key/id_rsa ];then
+	    cp ${ROOT_DIR}/common/id_rsa .
+	    cp ${ROOT_DIR}/common/id_rsa /root/.ssh
+	    chown ${username}:${username} id_rsa
+	    chmod 600 id_rsa
+	    chmod 600 /root/.ssh/id_rsa
+	else
+	    stty -icanon min 0 time 100
+	    read -p "请输入私钥地址(全路经)" addr
+	    stty sane
+	    if [ -z "$addr" ];then
+		echo -e "${MOVE_TO_COL}${GREEN}[${CYAN} OK ${GREEN}]${NORMAL}"
+		return
+	    else
+		cp ${addr} .
+		cp ${addr} /root/.ssh
+		chown ${username}:${username} id_rsa
+		chmod 600 id_rsa
+		chmod 600 /root/.ssh/id_rsa
+	    fi
+	fi
+	echo -e "${MOVE_TO_COL}${GREEN}[${CYAN} OK ${GREEN}]${NORMAL}"
+	cd ${DIR_ROOT}
+}
+set_vim()
+{	
+	echo -n "${CYAN}-*- ${GREEN}Set vim${NORMAL}"
+	cd /home/${username}
+	if [ -d myvim ];then
+		cd ${DIR_ROOT}
+		echo -e "${MOVE_TO_COL}${GREEN}[${CYAN} OK ${GREEN}]${NORMAL}"
+		return 0
+	fi
+	git clone git@github.com:tangfu/myvim.git >/dev/null 2>/dev/null
+	cd myvim
+	git config --global user.name tangfu
+	git config --global user.email abctfq2008@gmail.com
+	./myvim.sh -i ${username}
+	echo -e "${MOVE_TO_COL}${GREEN}[${CYAN} OK ${GREEN}]${NORMAL}"
+	cd ${DIR_ROOT}
+}
+set_library()
+{
+	echo -n "${CYAN}-*- ${GREEN}Set personal library${NORMAL}"
+	cd /home/${username}
+	mkdir -p library
+	git clone git@github.com:tangfu/simple-timer.git >/dev/null 2>/dev/null
+	git clone git@github.com:tangfu/em-shell.git >/dev/null 2>/dev/null
+	git clone git@github.com:tangfu/threadpool.git >/dev/null 2>/dev/null
+	git clone git@github.com:tangfu/config_parse.git >/dev/null 2>/dev/null
+	git clone git@github.com:tangfu/simple-log.git >/dev/null 2>/dev/null
+	echo -e "${MOVE_TO_COL}${GREEN}[${CYAN} OK ${GREEN}]${NORMAL}"
+	cd ${DIR_ROOT}
+}
+set_schedule_task()
+{
+	echo -n "${CYAN}-*- ${GREEN}设置cron计划任务${NORMAL}"
+#	直接保存即可(:wq)
+	crontab -u ${username} -e 2>/dev/null
+	echo -e "0 16 */15 * * /home/${username}/scripts/update-*\n*/30 * * * * check_router_wanip\n0 */2 * * * export DISPLAY=:0.0 && notify-send -t 5 \"\`date '+%F %T'\` 该休息了\"
+" > "/var/spool/cron/${username}"
+
+	echo -e "${MOVE_TO_COL}${GREEN}[${CYAN} OK ${GREEN}]${NORMAL}"
+}
+
+set_repo()
+{
+	echo -n "${CYAN}-*- ${GREEN}Set repo${NORMAL}"
+	cd openSUSE/repos
+	cp *.repo /etc/zypp/repos.d 2>/dev/null
+	echo -e "${MOVE_TO_COL}${GREEN}[${CYAN} OK ${GREEN}]${NORMAL}"
+	cd ${DIR_ROOT}
+
+}
+
+
+set_music()
+{
+    cp /media/GAME/软件/LINUX/cmmusic/cmmusic-* /home/${username}
+    cd /home/${username}
+    tar xvf cmmusic-1.6.tar.gz >/dev/null
+    tar xvf cmmusic-plugin-1.6.tar.bz2 >dev/null
+    cd cmmusic-1.6
+    ./confiure >/dev/null
+    make >/dev/null
+    make install >/dev/null
+    cd ../cmmusic-plugin-1.6
+    make >/dev/null
+    make install >/dev/null
+    cd ..
+    rm -rf cmmusic-1.6 cmmusic-plugin-1.6
+    cd /
+    mkdir -p /home/${username}/.cmmusic
+    ls /media/big-file/经典歌曲/中文金曲/*.mp3 > /home/${username}/.cmmusic/music.lst
+    ln -s /media/IMPORTANT/software/Player/Lyrics /home/${username}/.cmmusic/Lrc
+    cd ${ROOT_DIR}
+}
+
+set_sudoer()
+{
+	echo -n "${CYAN}-*- ${GREEN}sudo enable${NORMAL}"
+	cd /etc
+	[ -f sudoers_bak ] || cp sudoers sudoers_bak
+	chmod a+w sudoers
+	if [ -z `cat /etc/sudoers | grep ${username}` ] 2>/dev/null;then
+		sed "/^root\t/a\\${username}\tALL=(ALL)\tNOPASSWD:ALL" sudoers_bak > sudoers
+#		echo -e "${MOVE_TO_COL}${GREEN}[${CYAN} OK ${GREEN}]${NORMAL}"
+	fi
+	chmod a-w sudoers
+	echo -e "${MOVE_TO_COL}${GREEN}[${CYAN} OK ${GREEN}]${NORMAL}"
+	cd ${DIR_ROOT}
+}
+
+
+repo_install()
+{
+	for((i=1;i==1;))
+	do
+		zypper install $@ 
+		i=$?
+	done
+}
+
+install_software()
+{
+    # mplayer, ntfs-conf, synase, fcitx, git, make, cmake, git, subversion
+}
+
+set_info() 
+{
+cat <<INFO_END
+ --------------------------------------
+	* 记得手动设置NTFS权限问题，设定fstab中的某些NTFS分区选项，例如添加exec权限
+	* synapse设置自动启动，并改Alt+Space为开启建
+	* remmina设为开机启动，且进入状态栏
+	* 使用fcitx请用设置/sbin/sysconfig/language,设置input_method="fcitx"。
+	* gdesklet中的很多插件需要自己配置到桌面上。
+	* 设置账户自动登陆
+	* 8021认证，自行在网络设置里添加
+	* 安装hybird(https://github.com/levin108/hybrid.git)
+					
+ --------------------------------------
+INFO_END	
+}
+
+############################################################################################
+############################################################################################
+
+#trap "" 2
+trap "" 3
+#DIR_ROOT="/media/${username}/IMPORTANT/backup/fedora备份"
+#bash -e
+clear
+set_echo
+message
+echo "${WHITE}[${GREEN} 开始设置 ${WHITE}]${NORMAL}" 
+echo
+version=`cat /etc/SuSE-release | head -1 | awk '{print $2}'`
+#set_font
+#set_sudoer
+set_path
+#set_ssh_key
+#set_vim
+set_library
+set_music
+#针对作者
+#set_repo
+#set_rm_substitute
+#针对作者
+set_schedule_task
+cd  ${DIR_ROOT}
+if [ -s error_sh ] ;then
+	echo -e "\n${YELLOW}脚本执行过程中的错误:"
+	echo -n "${RED}"
+	cat error_sh
+	echo ${NORMAL}
+	rm error_sh
+fi
+set_info
+echo
+echo "${WHITE}[${GREEN} 设置结束 ${WHITE}]${NORMAL}" 

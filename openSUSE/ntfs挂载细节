@@ -1,0 +1,12 @@
+/dev/sda5 ata-ST3320613AS_6SZ0QASF-part5 /media/IMPORTANT
+/dev/sda6 ata-ST3320613AS_6SZ0QASF-part6 /media/GAME-2
+/dev/sda7 ata-ST3320613AS_6SZ0QASF-part7 /media/big-file
+
+/dev/sdb1 ata-ST380011A_4JV7M2GG-part1	/media/xp
+/dev/sdb3 ata-ST380011A_4JV7M2GG-part3	/media/WIN-7
+/dev/sdb5 ata-ST380011A_4JV7M2GG-part5	/media/GAME
+
+
+users,gid=users,fmask=133,dmask=022,locale=zh_CN.UTF-8
+
+users,gid=users,rw,exec,locale=zh_CN.UTF-8

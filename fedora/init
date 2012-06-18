@@ -378,10 +378,10 @@ set_schedule_task()
 	echo -e "${MOVE_TO_COL}${GREEN}[${CYAN} OK ${GREEN}]${NORMAL}"
 }
 
-set_yum()
+set_repo()
 {
 	echo -n "${CYAN}-*- ${GREEN}Set yum${NORMAL}"
-
+	cd fedora/repos
 	cp *.repo /etc/yum.repos.d 2>/dev/null
 	#rpm -ivh http://linuxdownload.adobe.com/adobe-release/adobe-	release-i386-1.0-1.noarch.rpm
 	rpm -ivh fedora/yum/adobe-release-i386-1.0-1.noarch.rpm >/dev/null
@@ -650,7 +650,7 @@ set_ssh_key
 set_vim
 set_library
 #针对作者
-set_yum
+set_repo
 #set_root_login
 #set_rm_substitute
 #针对作者
