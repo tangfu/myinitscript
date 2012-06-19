@@ -34,13 +34,14 @@ relese()
 		DIST=debian
 		VERSION=`cat /etc/debian-release`
 	elif [ -f /etc/SuSE-release ] ; then
-		DIST=opensuse
+		DIST=openSUSE
 		VERSION=`cat /etc/SuSE-release`
 	elif [ `cat /etc/issue | grep Ubuntu | wc -l` != 0 ] ; then
 		DIST=debian
 	elif [ `cat /etc/issue | grep Puppy | wc -l` != 0 ] ; then
 		DIST=legacy
 	fi
+	printf "$DIST"
 }
 
 check()
@@ -53,13 +54,13 @@ check()
 	fi
 }
 
-exec()
+exec_systemset()
 {
     check
-    relese
-    if [ -d "$DIST" ];then
-	cd $DIST 
-	. init
+    system_type=`relese`
+    if [ -d "${system_type}" ];then
+	cd ${system_type}
+	. ./s_init
     else
 	echo "${RED}没有相应系统的初始化脚本${NORMAL}"
     fi
@@ -68,4 +69,4 @@ exec()
 #######################################################################
 DIR_ROOT=`pwd`
 username=`users | awk '{print $1}'`
-exec
+exec_systemset

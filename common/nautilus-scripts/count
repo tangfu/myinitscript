@@ -1,0 +1,35 @@
+#!/bin/sh
+#
+#
+#
+if [ $#  != 1 ] ;then
+	zenity --error --text="只能选择一个文件"
+fi
+
+REPORT=.info1234
+
+#n=\$$1
+#file=`eval echo $n`
+#file=`pwd`/$file
+file=$1
+#file=$NAUTILUS_SCRIPT_SELECTED_FILE_PATHS
+#file=/home/tangfu/.gnome2/nautilus-scripts/fileinfo
+
+filetype=`file $file|cut -d: -f2`
+if [ -d "$file" ];then
+	fileno=`ls -l |grep "^-"|wc -l`
+	directoryno=`ls -l |grep "^ｄ"|wc -l`
+	allfileno=`ls -lR|grep "^-"|wc -l`
+	alldirectoryno=`ls -lR|grep "^d"|wc -l`
+	echo -e "DNAME\n$file\nFILETYPE\n$filetype\nFILENO\n$fileno\nDIRCTORYNO\n$directoryno\nALLFILENO\n$allfileno\nALLDIRECTORYNO\n$alldirectoryno">$REPORT
+#elif [ -f "$file" ];then
+else
+	filelineno=`wc -l $file | cut -d' ' -f1`
+	echo -e "FILENAME\n$file\nFILETYPE\n$filetype\nFILELINENO\n$filelineno lines">$REPORT
+#else
+#	zenity --error --text="不支持的文件类型"
+#	exit -1
+fi
+
+cat $REPORT | zenity --title="Meda Data - $file" --list --column='Meta' --column='Description' --width 650 --height 500 > /dev/null
+rm $REPORT

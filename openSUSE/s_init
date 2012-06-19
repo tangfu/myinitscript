@@ -56,21 +56,22 @@ set_path()
 	[ -e "mycode" ] || ln -s "/media/IMPORTANT/Study_Materials/Program/mycode" . 2>>${DIR_ROOT}/error_sh
 	[ -e "License" ] || ln -s "/media/IMPORTANT/Study_Materials/Program/版本与协议/License" . 2>>${DIR_ROOT}/error_sh
 	[ -e "快捷方式" ] || ln -s "/media/IMPORTANT/software/linux_software/快捷方式" . 2>>${DIR_ROOT}/error_sh
-	[ -e "Andriod-SDK" ] || ln -s "/media/IMPORTANT/software/android-sdk-linux" Andriod-SDK 2>>${DIR_ROOT}/error_sh
+#	[ -e "Andriod-SDK" ] || ln -s "/media/IMPORTANT/software/android-sdk-linux" Andriod-SDK 2>>${DIR_ROOT}/error_sh
 	[ -f "要做的.txt" ] || ln -s -f "/media/IMPORTANT/要做的.txt" . 2>>${DIR_ROOT}/error_sh
 
 
-	cp $DIR_ROOT/SciTEUser.properties /home/${username}/.SciTEUser.properties
-	chown ${username}:${username} /home/${username}/.SciTEUser.properties
-	cp -a $DIR_ROOT/nautilus-scripts/* /home/${username}/.gnome2/nautilus-scripts/
-	chown -R ${username}:${username} /home/${username}/.gnome2/nautilus-scripts/*
+#	cp $DIR_ROOT/SciTEUser.properties /home/${username}/.SciTEUser.properties
+#	chown ${username}:${username} /home/${username}/.SciTEUser.properties
+	cp -a $DIR_ROOT/common/nautilus-scripts/* /home/${username}/.gnome2/nautilus-scripts/
+	chown -R ${username}:users /home/${username}/.gnome2/nautilus-scripts/*
 	chmod -R a+x /home/${username}/.gnome2/nautilus-scripts/*
 	
 	[ -e .bashrc_bak ] || cp .bashrc .bashrc_bak
 	[ -z `awk "/home/{print $2}" .bashrc` ] 2>/dev/null && echo -e "export PATH=\$PATH:/home/$username/scripts:/home/$username/scripts/bash_library:/home/$username/Py-script:/home/$username/PHP-Script:/home/$username/Andriod-SDK:/home/$username/快捷方式:/home/$username/mycode:/media/${username}/IMPORTANT/software/linux_software/aspersa\nexport SVN_EDITOR=vim\nexport CDPATH=.:~:/etc:/var:/usr:/usr/local:/run/media/${username}" >> /home/$username/.bashrc
-	[ -z `awk "/bashmarks.sh/{print $2}" .bash_profile` ] 2>/dev/null && echo "source ~/scripts/bashmarks.sh" >> /home/$username/.bashrc
+	#[ -z `awk "/bashmarks.sh/{print $2}" .bash_profile` ] 2>/dev/null && 
+	echo "source ~/scripts/bashmarks.sh" >> /home/$username/.bashrc
 
-	if [ -z `awk '\/media\/IMPORTANT/{print $2}' .gtk-bookmarks` ] 2>/dev/null;then
+	if [ -z `awk '/\/media\/IMPORTANT/{print $2}' .gtk-bookmarks` ] 2>/dev/null;then
 		cat<<-BM 1>>/home/$username/.gtk-bookmarks
 			file:///media/IMPORTANT/Study_Materials/OS/linux linux
 			file:///media/IMPORTANT/Study_Materials/OS/linux/Shell%E4%B8%8E%E5%91%BD%E4%BB%A4 Shell与命令
@@ -222,6 +223,7 @@ repo_install()
 install_software()
 {
     # mplayer, ntfs-conf, synase, fcitx, git, make, cmake, git, subversion
+    return 1
 }
 
 set_info() 
@@ -236,9 +238,8 @@ cat <<INFO_END
 	* 设置账户自动登陆
 	* 8021认证，自行在网络设置里添加
 	* 安装hybird(https://github.com/levin108/hybrid.git)
-					
  --------------------------------------
-INFO_END	
+INFO_END
 }
 
 ############################################################################################
@@ -260,12 +261,12 @@ set_path
 #set_ssh_key
 #set_vim
 set_library
-set_music
+#set_music
 #针对作者
 #set_repo
 #set_rm_substitute
 #针对作者
-set_schedule_task
+#set_schedule_task
 cd  ${DIR_ROOT}
 if [ -s error_sh ] ;then
 	echo -e "\n${YELLOW}脚本执行过程中的错误:"

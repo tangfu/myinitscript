@@ -1,0 +1,16 @@
+#!/bin/sh
+
+i18n=${LANG%.*}
+num=$#
+for((i=1;$i <= $num;))
+do
+	n=\$$i
+	file=`eval echo $n`
+	file=`pwd`/$file
+	if [ "$i18n" == "zh_CN" ];then
+       	ln -s -f "$file" ~/图片/"${file##*/}"
+	elif [ "$i18n" == "en_US" ];then
+       	ln -s -f "$file" ~/Picture/"${file##*/}"
+	fi
+	let i=i+1
+done

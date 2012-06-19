@@ -1,0 +1,11 @@
+#!/bin/sh
+
+num=$#
+for((i=1;$i <= $num;))
+do
+	n=\$$i
+	file=`eval echo $n`
+	file=`pwd`/$file
+       	ln -s -f "$file" ~/"${file##*/}"
+	let i=i+1
+done
