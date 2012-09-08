@@ -50,14 +50,14 @@ set_path()
 	echo -n "${CYAN}-*- ${GREEN}设置个人程序到PATH${NORMAL}"
 	
 	cd /home/${username}
-	[ -e "scripts" ] || ln -s "/media/IMPORTANT/Study_Materials/OS/linux/Shell与命令/scripts" . 2>>${DIR_ROOT}/error_sh
-	[ -e "Py-script" ] || ln -s "/media/IMPORTANT/Study_Materials/Program/Python/Py-script" . 2>>${DIR_ROOT}/error_sh
-	[ -e "PHP-Script" ] || ln -s "/media/IMPORTANT/Study_Materials/Program/PHP/PHP-Script" . 2>>${DIR_ROOT}/error_sh
-	[ -e "mycode" ] || ln -s "/media/IMPORTANT/Study_Materials/Program/mycode" . 2>>${DIR_ROOT}/error_sh
-	[ -e "License" ] || ln -s "/media/IMPORTANT/Study_Materials/Program/版本与协议/License" . 2>>${DIR_ROOT}/error_sh
-	[ -e "快捷方式" ] || ln -s "/media/IMPORTANT/software/linux_software/快捷方式" . 2>>${DIR_ROOT}/error_sh
-#	[ -e "Andriod-SDK" ] || ln -s "/media/IMPORTANT/software/android-sdk-linux" Andriod-SDK 2>>${DIR_ROOT}/error_sh
-	[ -f "要做的.txt" ] || ln -s -f "/media/IMPORTANT/要做的.txt" . 2>>${DIR_ROOT}/error_sh
+	[ -e "scripts" ] || ln -s "/run/media/$username/IMPORTANT/Study_Materials/OS/linux/Shell与命令/scripts" . 2>>${DIR_ROOT}/error_sh
+	[ -e "Py-script" ] || ln -s "/run/media/$username/IMPORTANT/Study_Materials/Program/Python/Py-script" . 2>>${DIR_ROOT}/error_sh
+	[ -e "PHP-Script" ] || ln -s "/run/media/$username/IMPORTANT/Study_Materials/Program/PHP/PHP-Script" . 2>>${DIR_ROOT}/error_sh
+	[ -e "mycode" ] || ln -s "/run/media/$username/IMPORTANT/Study_Materials/Program/mycode" . 2>>${DIR_ROOT}/error_sh
+	[ -e "License" ] || ln -s "/run/media/$username/IMPORTANT/Study_Materials/Program/版本与协议/License" . 2>>${DIR_ROOT}/error_sh
+	[ -e "快捷方式" ] || ln -s "/run/media/$username/IMPORTANT/software/linux_software/快捷方式" . 2>>${DIR_ROOT}/error_sh
+#	[ -e "Andriod-SDK" ] || ln -s "/run/media/$username/IMPORTANT/software/android-sdk-linux" Andriod-SDK 2>>${DIR_ROOT}/error_sh
+	[ -f "要做的.txt" ] || ln -s -f "/run/media/$username/IMPORTANT/要做的.txt" . 2>>${DIR_ROOT}/error_sh
 
 
 #	cp $DIR_ROOT/SciTEUser.properties /home/${username}/.SciTEUser.properties
@@ -71,20 +71,20 @@ set_path()
 	#[ -z `awk "/bashmarks.sh/{print $2}" .bash_profile` ] 2>/dev/null && 
 	echo "source ~/scripts/bashmarks.sh" >> /home/$username/.bashrc
 
-	if [ -z `awk '/\/media\/IMPORTANT/{print $2}' .gtk-bookmarks` ] 2>/dev/null;then
+	if [ -z `awk '/\/run\/media\/$username\/\/IMPORTANT/{print $2}' .gtk-bookmarks` ] 2>/dev/null;then
 		cat<<-BM 1>>/home/$username/.gtk-bookmarks
-			file:///media/IMPORTANT/Study_Materials/OS/linux linux
-			file:///media/IMPORTANT/Study_Materials/OS/linux/Shell%E4%B8%8E%E5%91%BD%E4%BB%A4 Shell与命令
-			file:///media/IMPORTANT/software/linux_software linux_software
-			file:///media/IMPORTANT/Study_Materials/Program/kernel kernel
-			file:///media/GAME/%E8%BD%AF%E4%BB%B6/LINUX LINUX软件
-			file:///media/IMPORTANT/Study_Materials/Program Program
-			file:///media/IMPORTANT/backup/fedora%E5%A4%87%E4%BB%BD fedora备份
-			file:///media/IMPORTANT/Study_Materials/server server
-			file:///media/IMPORTANT/COMPRESS/boot-technology boot-technology
-			file:///media//WIN-7/Users/TANGFU/Desktop windows桌面
-			file:///media/big-file/project project
-			file:///media/big-file/SYSTEM SYSTEM
+			file:///run/media/$username/IMPORTANT/Study_Materials/OS/linux linux
+			file:///run/media/$username/IMPORTANT/Study_Materials/OS/linux/Shell%E4%B8%8E%E5%91%BD%E4%BB%A4 Shell与命令
+			file:///run/media/$username/IMPORTANT/software/linux_software linux_software
+			file:///run/media/$username/IMPORTANT/Study_Materials/Program/kernel kernel
+			file:///run/media/$username/GAME/%E8%BD%AF%E4%BB%B6/LINUX LINUX软件
+			file:///run/media/$username/IMPORTANT/Study_Materials/Program Program
+			file:///run/media/$username/IMPORTANT/backup/fedora%E5%A4%87%E4%BB%BD fedora备份
+			file:///run/media/$username/IMPORTANT/Study_Materials/server server
+			file:///run/media/$username/IMPORTANT/COMPRESS/boot-technology boot-technology
+			file:///run/media/$username/WIN-7/Users/TANGFU/Desktop windows桌面
+			file:///run/media/$username/big-file/project project
+			file:///run/media/$username/big-file/SYSTEM SYSTEM
 		BM
 	fi
 
@@ -261,7 +261,7 @@ version=`cat /etc/SuSE-release | head -1 | awk '{print $2}'`
 set_path
 #set_ssh_key
 #set_vim
-set_library
+#set_library
 #set_music
 #针对作者
 #set_repo
