@@ -2,7 +2,7 @@
 name=opensuse_zh
 enabled=1
 autorefresh=1
-baseurl=http://download.opensuse.org/repositories/home:/opensuse_zh/openSUSE_12.1/
+baseurl=http://download.opensuse.org/repositories/home:/opensuse_zh/openSUSE_$version/
 path=/
 type=rpm-md
 priority=90

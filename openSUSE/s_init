@@ -166,7 +166,8 @@ set_repo()
 {
 	echo -n "${CYAN}-*- ${GREEN}Set repo${NORMAL}"
 	cd openSUSE/repos
-	cp *.repo /etc/zypp/repos.d 2>/dev/null
+	./gen.sh
+	cp temp/*.repo /etc/zypp/repos.d 2>/dev/null	
 	echo -e "${MOVE_TO_COL}${GREEN}[${CYAN} OK ${GREEN}]${NORMAL}"
 	cd ${DIR_ROOT}
 

@@ -2,7 +2,7 @@
 name=packman
 enabled=1
 autorefresh=1
-baseurl=http://packman.inode.at/suse/12.1/
+baseurl=http://packman.inode.at/suse/$version/
 path=/
 type=rpm-md
 priority=50

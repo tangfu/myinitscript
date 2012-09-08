@@ -1,0 +1,9 @@
+[163-openSUSE-$version-Non-Oss]
+name=163-openSUSE-$version-Non-Oss
+enabled=1
+autorefresh=1
+baseurl=http://mirrors.163.com/openSUSE/distribution/$version/repo/non-oss
+path=/
+type=yast2
+priority=80
+keeppackages=0

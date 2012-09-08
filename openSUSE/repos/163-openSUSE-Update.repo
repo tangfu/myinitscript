@@ -1,0 +1,9 @@
+[163-openSUSE-$version-Update]
+name=163-openSUSE-$version-Update
+enabled=1
+autorefresh=1
+baseurl=http://mirrors.163.com/openSUSE/update/$version/
+path=/
+type=rpm-md
+priority=80
+keeppackages=0
