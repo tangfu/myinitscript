@@ -1,9 +1,0 @@
-[163-openSUSE-12.1-Update]
-name=163-openSUSE-12.1-Update
-enabled=1
-autorefresh=1
-baseurl=http://mirrors.163.com/openSUSE/update/12.1/
-path=/
-type=rpm-md
-priority=80
-keeppackages=0

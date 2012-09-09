@@ -31,18 +31,32 @@ End-of-message
 	echo "${NORMAL}"
 }
 
+
 set_font()
 {
 	if [ -d /usr/share/fonts/yahei ];then
 		:
 	else
 		cd $DIR_ROOT
-		cp -a yahei /usr/share/fonts/
+		cp -a comm/yahei /usr/share/fonts/
 		cd /usr/share/fonts/yahei
 		unxz *.xz
 		mkfontscale && mkfontdir 2>>${DIR_ROOT}/error_sh
 		fc-cache 2>>${DIR_ROOT}/error_sh
 	fi
+}
+
+set_astyle()
+{
+	cd $DIR_ROOT
+	cp comm/astyle/astyle.conf /home/${username}/.astylerc
+
+}
+
+set_template()
+{
+	cd $DIR_ROOT
+	cp comm/templates/* /home/${username}/模板/
 }
 
 set_rm_substitute()
@@ -643,6 +657,8 @@ message
 echo "${WHITE}[${GREEN} 开始设置 ${WHITE}]${NORMAL}" 
 echo
 version=`cat /etc/fedora-release | awk '{print $3}'`
+set_astyle
+set_template
 set_font
 set_sudoer
 set_path

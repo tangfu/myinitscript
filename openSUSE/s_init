@@ -44,6 +44,18 @@ set_rm_substitute()
 	ln -s "/media/${username}/IMPORTANT/Study_Materials/OS/linux/Shell与命令/scripts/rm-substitute.sh" /bin/rm 2>>${DIR_ROOT}/error_sh
 }
 
+set_astyle()
+{
+	cd $DIR_ROOT
+	cp comm/astyle/astyle.conf /home/${username}/.astylerc
+
+}
+
+set_template()
+{
+	cd $DIR_ROOT
+	cp comm/templates/* /home/${username}/模板/
+}
 
 set_path()
 {
@@ -258,6 +270,8 @@ echo
 version=`cat /etc/SuSE-release | head -1 | awk '{print $2}'`
 #set_font
 #set_sudoer
+set_astyle
+set_template
 set_path
 #set_ssh_key
 #set_vim

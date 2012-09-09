@@ -1,9 +1,0 @@
-[163-openSUSE-12.1-Non-Oss]
-name=163-openSUSE-12.1-Non-Oss
-enabled=1
-autorefresh=1
-baseurl=http://mirrors.163.com/openSUSE/distribution/12.1/repo/non-oss
-path=/
-type=yast2
-priority=80
-keeppackages=0
