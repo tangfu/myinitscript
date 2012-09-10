@@ -46,6 +46,11 @@ set_font()
 	fi
 }
 
+set_core_location()
+{
+	echo "/home/${username}/core/core-%e-%p-%t" > /proc/sys/kernel/core_pattern
+}
+
 set_astyle()
 {
 	cd $DIR_ROOT
@@ -653,6 +658,7 @@ trap "" 3
 #bash -e
 clear
 set_echo
+set_core_location
 message
 echo "${WHITE}[${GREEN} 开始设置 ${WHITE}]${NORMAL}" 
 echo

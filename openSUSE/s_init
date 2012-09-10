@@ -33,6 +33,13 @@ set_font()
 	fi
 }
 
+
+set_core_location()
+{
+	echo "/home/${username}/core/core-%e-%p-%t" > /proc/sys/kernel/core_pattern
+}
+
+
 set_rm_substitute()
 {
 #	the function does not work in the fedora 14	
@@ -270,6 +277,7 @@ echo
 version=`cat /etc/SuSE-release | head -1 | awk '{print $2}'`
 #set_font
 #set_sudoer
+set_core_location
 set_astyle
 set_template
 set_path
